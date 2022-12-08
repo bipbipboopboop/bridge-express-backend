@@ -13,23 +13,24 @@ const io = new Server(server, {
 });
 
 var chatHistory = [];
+var numUsersOnline = 0;
 
 io.on("connection", (socket) => {
-  console.log(`client connected: ${socket.id}`);
-
-  socket.on("connect", () => {
-    chatHistory = chatHistory.concat(msg);
-    console.log({ chatHistory });
-    io.emit("chat message", chatHistory);
-  });
+  io.emit("chat message", chatHistory);
+  numUsersOnline++;
+  io.emit("online_users:read", numUsersOnline);
+  console.log(`client connected: ${socket.id}, ${numUsersOnline} online`);
 
   socket.on("chat message", (msg) => {
     chatHistory = chatHistory.concat(msg);
     console.log({ chatHistory });
     io.emit("chat message", chatHistory);
   });
+
   socket.on("disconnect", () => {
-    console.log("user disconnected");
+    numUsersOnline--;
+    io.emit("online_users:read", numUsersOnline);
+    console.log(`user disconnected, ${numUsersOnline} online`);
   });
 });
 
