@@ -67,7 +67,14 @@ const leaveRooms = (socket) => {
   for (const id in rooms) {
     const room = rooms[id];
     // check to see if the socket is in the current room
-    if (room.sockets.includes(socket)) {
+    console.log({
+      id,
+      rooms,
+      socket,
+      sockets: room.sockets,
+      is_include: room.sockets.includes(socket),
+    });
+    if (room.sockets.includes(socket?.roomId)) {
       socket.leave(id);
       // remove the socket from the room object
       room.sockets = room.sockets.filter((item) => item !== socket);
@@ -90,10 +97,10 @@ const joinLobby = () => {
   io.emit("numUsersRead", numUsersOnline);
 };
 
-const leaveLobby = () => {
+const leaveLobby = (socket) => {
   numUsersOnline--;
   io.emit("numUsersRead", numUsersOnline);
-  leaveRooms();
+  leaveRooms(socket);
 };
 
 /**

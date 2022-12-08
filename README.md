@@ -3,9 +3,6 @@ Lobby
 ```
 createRoom(roomName) (done)
 joinRoom(roomId,callback) (done)
-showRooms
-leaveRoom
-leaveRooms
-
-
+listRooms (done)
+leaveRooms (not done)
 ```
