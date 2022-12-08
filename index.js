@@ -1,9 +1,8 @@
 const express = require("express");
-const http = require("http");
 const app = express();
 
+const http = require("http");
 const server = http.createServer(app);
-console.log(server);
 
 const { Server } = require("socket.io");
 const io = new Server(server, {
@@ -21,10 +20,8 @@ io.on("connection", (socket) => {
   io.emit("online_users:read", numUsersOnline);
   console.log(`client connected: ${socket.id}, ${numUsersOnline} online`);
 
-  socket.on("chat message", (msg) => {
-    chatHistory = chatHistory.concat(msg);
-    console.log({ chatHistory });
-    io.emit("chat message", chatHistory);
+  socket.on("join-room", (joinRoomID) => {
+    socket.join(joinRoomID);
   });
 
   socket.on("disconnect", () => {
