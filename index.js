@@ -17,7 +17,7 @@ var numUsersOnline = 0;
 io.on("connection", (socket) => {
   io.emit("chat message", chatHistory);
   numUsersOnline++;
-  io.emit("online_users:read", numUsersOnline);
+  io.emit("numUsersRead", numUsersOnline);
   console.log(`client connected: ${socket.id}, ${numUsersOnline} online`);
 
   socket.on("join-room", (joinRoomID) => {
@@ -26,7 +26,7 @@ io.on("connection", (socket) => {
 
   socket.on("disconnect", () => {
     numUsersOnline--;
-    io.emit("online_users:read", numUsersOnline);
+    io.emit("numUsersRead", numUsersOnline);
     console.log(`user disconnected, ${numUsersOnline} online`);
   });
 });

@@ -1,8 +1,9 @@
-Lobby Namespace
+Lobby
 
 ```
+joinRoom
+leaveRoom
+leaveRooms
 
 
 ```
-
-Game Namespace
