@@ -116,9 +116,12 @@ io.on("connection", (socket) => {
       name: roomName,
       sockets: [],
     };
-    rooms[room.id] = room;
 
-    joinRoomFn(socket, room);
+    if (!rooms[room.id]) {
+      rooms[room.id] = room;
+      joinRoomFn(socket, room);
+    }
+
     // console.log({ room });
     // callback();
   });
@@ -131,11 +134,19 @@ io.on("connection", (socket) => {
     const room = rooms[roomId];
 
     if (room) {
-      joinRoomFn(socket, room);
-      callback({
-        status: 200,
-        err: null,
-      });
+      const canJoin = !room.sockets.includes(socket);
+      if (canJoin) {
+        joinRoomFn(socket, room);
+        callback({
+          status: 200,
+          err: null,
+        });
+      } else {
+        callback({
+          status: 404,
+          err: `You're already in room ${roomId}`,
+        });
+      }
     } else {
       callback({
         status: 404,
@@ -160,6 +171,11 @@ io.on("connection", (socket) => {
         client.emit("initGame");
       }
     }
+  });
+
+  socket.on("leaveRoom", () => {
+    leaveRoom(socket);
+    listRooms();
   });
 
   socket.on("disconnect", () => {
