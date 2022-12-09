@@ -117,7 +117,11 @@ io.on("connection", (socket) => {
       sockets: [],
     };
 
-    if (!rooms[room.id]) {
+    console.log({ rooms: socket?.rooms });
+
+    const socketNotInAnyRoom = socket?.rooms?.size === 1; // Socket will always be in a room of <client.id>
+
+    if (socketNotInAnyRoom) {
       rooms[room.id] = room;
       joinRoomFn(socket, room);
     }
@@ -134,12 +138,19 @@ io.on("connection", (socket) => {
     const room = rooms[roomId];
 
     if (room) {
-      const canJoin = !room.sockets.includes(socket);
+      const isSocketInRoom = room.sockets.includes(socket);
+      const isRoomFull = room.sockets.length >= 4;
+      const canJoin = !isSocketInRoom && !isRoomFull;
       if (canJoin) {
         joinRoomFn(socket, room);
         callback({
           status: 200,
           err: null,
+        });
+      } else if (isRoomFull) {
+        callback({
+          status: 404,
+          err: `Room ${roomId} is full!`,
         });
       } else {
         callback({
