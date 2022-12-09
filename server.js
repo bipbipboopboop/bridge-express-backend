@@ -59,23 +59,16 @@ const joinRoomFn = (socket, room) => {
 };
 
 /**
- * Make the socket leave any rooms that it is a part of
+ * Make the socket leave any room that it is a part of
  * @param socket A connected socket.io socket
  */
-const leaveRooms = (socket) => {
+const leaveRoom = (socket) => {
   const roomsToDelete = [];
   for (const id in rooms) {
     const room = rooms[id];
-    // check to see if the socket is in the current room
-    console.log({
-      id,
-      rooms,
-      socket,
-      sockets: room.sockets,
-      is_include: room.sockets.includes(socket),
-    });
-    if (room.sockets.includes(socket?.roomId)) {
+    if (room.sockets.includes(socket)) {
       socket.leave(id);
+      console.log(`${socket?.id} has left the room ${room?.id}`);
       // remove the socket from the room object
       room.sockets = room.sockets.filter((item) => item !== socket);
     }
@@ -97,10 +90,9 @@ const joinLobby = () => {
   io.emit("numUsersRead", numUsersOnline);
 };
 
-const leaveLobby = (socket) => {
+const leaveLobby = (reason) => {
   numUsersOnline--;
   io.emit("numUsersRead", numUsersOnline);
-  leaveRooms(socket);
 };
 
 /**
@@ -169,7 +161,11 @@ io.on("connection", (socket) => {
       }
     }
   });
-  socket.on("disconnect", leaveLobby);
+
+  socket.on("disconnect", () => {
+    leaveLobby();
+    leaveRoom(socket);
+  });
 });
 
 server.listen(PORT, () => {
