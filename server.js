@@ -18,6 +18,7 @@ const PORT = process.env.PORT || 3000;
  */
 const rooms = {};
 var numUsersOnline = 0;
+const gameStates = {}; // An object to store the state of each game(room) as value, and can be indexed by using the roomID of the room.
 
 const listRooms = () => {
   // const room = {
@@ -31,6 +32,7 @@ const listRooms = () => {
       id: room?.id,
       name: room?.name,
       sockets: room?.sockets?.map((skt) => skt?.id),
+      readySockets: room?.readySockets,
     };
     return roomInfo;
   });
@@ -49,7 +51,7 @@ const joinRoomFn = (socket, room) => {
   if (room) {
     room.sockets.push(socket);
     socket.join(room.id);
-    socket.roomId = room.id;
+    socket.roomID = room.id;
     console.log(socket.id, "Joined", room.id);
     listRooms();
     // console.log("socket is", socket);
@@ -104,7 +106,14 @@ io.on("connection", (socket) => {
    * Signal that a player has entered the website(lobby) upon connection.
    */
   console.log(`${socket?.id} has joined`);
-  joinLobby();
+
+  socket.on("joinLobby", (playerID) => {
+    numUsersOnline++;
+    io.emit("numUsersRead", numUsersOnline);
+    socket.playerID = playerID;
+  });
+
+  // joinLobby();
   listRooms();
 
   /**
@@ -115,6 +124,7 @@ io.on("connection", (socket) => {
       id: socket?.id?.slice(0, 4)?.toUpperCase(),
       name: roomName,
       sockets: [],
+      readySockets: [],
     };
 
     console.log({ rooms: socket?.rooms });
@@ -133,9 +143,9 @@ io.on("connection", (socket) => {
   /**
    * Listens to player join room event, fires when a player joins a room
    */
-  socket.on("joinRoom", (roomId, callback) => {
-    console.log({ "joinRoom.roomId": roomId });
-    const room = rooms[roomId];
+  socket.on("joinRoom", (roomID, callback) => {
+    console.log({ "joinRoom.roomID": roomID });
+    const room = rooms[roomID];
 
     if (room) {
       const isSocketInRoom = room.sockets.includes(socket);
@@ -150,18 +160,18 @@ io.on("connection", (socket) => {
       } else if (isRoomFull) {
         callback({
           status: 404,
-          err: `Room ${roomId} is full!`,
+          err: `Room ${roomID} is full!`,
         });
       } else {
         callback({
           status: 404,
-          err: `You're already in room ${roomId}`,
+          err: `You're already in room ${roomID}`,
         });
       }
     } else {
       callback({
         status: 404,
-        err: `Room ID : ${roomId} doesn't exist! Please try again`,
+        err: `Room ID : ${roomID} doesn't exist! Please try again`,
       });
     }
 
@@ -173,7 +183,7 @@ io.on("connection", (socket) => {
    */
   socket.on("roomReady", () => {
     console.log(socket.id, "is ready!");
-    const room = rooms[socket.roomId];
+    const room = rooms[socket.roomID];
 
     // Toggle ready mode when room has 4 players.
     if (room.sockets.length == 4) {
@@ -188,6 +198,8 @@ io.on("connection", (socket) => {
     leaveRoom(socket);
     listRooms();
   });
+
+  socket.on("declareReady", () => {});
 
   socket.on("disconnect", () => {
     leaveLobby();
