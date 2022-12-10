@@ -1,10 +1,13 @@
 const dotenv = require("dotenv");
 const app = require("express")();
 const server = require("http").createServer(app);
-const mongoose = require("mongoose");
 
+// Database setup
+const mongoose = require("mongoose");
+mongoose.set("strictQuery", true);
 dotenv.config();
-mongoose.set("strictQuery", false);
+const Room = require("./models/roomModel");
+const Player = require("./models/playerModel");
 
 const { Server } = require("socket.io");
 const io = new Server(server, {
@@ -25,26 +28,16 @@ const rooms = {};
 var numUsersOnline = 0;
 const gameStates = {}; // An object to store the state of each game(room) as value, and can be indexed by using the roomID of the room.
 
-const listRooms = () => {
+const listRooms = async () => {
   // const room = {
   //   id: socket?.id,
   //   name: roomName,
   //   sockets: [],
   // };
-  const roomList = Object.keys(rooms)?.map((key) => {
-    const room = rooms[key];
-    const roomInfo = {
-      id: room?.id,
-      name: room?.name,
-      sockets: room?.sockets?.map((skt) => skt?.id),
-      readySockets: room?.readySockets,
-    };
-    return roomInfo;
-  });
 
-  // console.log({ roomList: rooms });
-
-  io.emit("listRooms", roomList);
+  const allRooms = await Room.find();
+  console.log({ listRooms: allRooms });
+  io.emit("listRooms", allRooms);
 };
 
 /**
@@ -106,9 +99,11 @@ io.on("connection", (socket) => {
   /**
    * Signal that a player has entered the website(lobby) upon connection.
    */
-  socket.on("joinLobby", (playerID) => {
+  socket.on("joinLobby", async (playerID) => {
     numUsersOnline++;
     io.emit("numUsersRead", numUsersOnline);
+    const player = await Player.findOneOrCreate({ playerID });
+    console.log({ player });
     socket.playerID = playerID;
     console.log(`playerID : ${playerID} has joined the lobby!`);
   });
@@ -118,25 +113,40 @@ io.on("connection", (socket) => {
   /**
    * Gets fired when a user wants to create a new room.
    */
-  socket.on("createRoom", (roomName) => {
-    const room = {
-      id: socket?.id?.slice(0, 4)?.toUpperCase(),
-      name: roomName,
-      sockets: [],
-      readySockets: [],
+  socket.on("createRoom", async (roomName) => {
+    // room : {
+    //   roomID: String,
+    //   name: String,
+    //   players: [ObjectID{}],
+    // }
+
+    const createRoomFn = async (roomName) => {
+      try {
+        const firstPlayer = await Player.findOne({
+          playerID: socket?.playerID,
+        });
+        const room = await Room.create({
+          roomID: socket?.id?.slice(0, 4)?.toUpperCase(),
+          name: roomName,
+          players: [firstPlayer],
+        });
+        return room.populate("players");
+      } catch (err) {
+        console.log(`Error occured at createRoomFn : ${err.message}`);
+        socket.emit("error", err.message);
+      }
     };
 
-    console.log({ rooms: socket?.rooms });
+    const room = await createRoomFn(roomName);
 
-    const socketNotInAnyRoom = socket?.rooms?.size === 1; // Socket will always be in a room of <client.id>
+    console.log({ room });
 
-    if (socketNotInAnyRoom) {
-      rooms[room.id] = room;
-      joinRoomFn(socket, room);
-    }
+    // const socketNotInAnyRoom = socket?.rooms?.size === 1; // Socket will always be in a room of <client.id>
 
-    // console.log({ room });
-    // callback();
+    // if (socketNotInAnyRoom) {
+    //   rooms[room.id] = room;
+    //   joinRoomFn(socket, room);
+    // }
   });
 
   /**
@@ -205,6 +215,8 @@ io.on("connection", (socket) => {
     leaveRoom(socket);
   });
 });
+
+console.log(process.env.MONG_URI);
 
 mongoose
   .connect(process.env.MONG_URI)

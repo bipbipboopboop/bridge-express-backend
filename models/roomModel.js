@@ -9,7 +9,7 @@ const roomSchema = new Schema(
     //   name: roomName,
     //   sockets: [],
     // };
-    id: {
+    roomID: {
       type: String,
       required: true,
     },
@@ -17,9 +17,7 @@ const roomSchema = new Schema(
       type: String,
       required: true,
     },
-    players: {
-      type: [String],
-    },
+    players: [{ type: Schema.Types.ObjectId, ref: "Player" }],
   },
   { timestamps: true }
 );
