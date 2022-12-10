@@ -1,5 +1,10 @@
+const dotenv = require("dotenv");
 const app = require("express")();
 const server = require("http").createServer(app);
+const mongoose = require("mongoose");
+
+dotenv.config();
+mongoose.set("strictQuery", false);
 
 const { Server } = require("socket.io");
 const io = new Server(server, {
@@ -201,6 +206,13 @@ io.on("connection", (socket) => {
   });
 });
 
-server.listen(PORT, () => {
-  console.log("listening on *:3000");
-});
+mongoose
+  .connect(process.env.MONG_URI)
+  .then(() => {
+    server.listen(PORT, () => {
+      console.log("listening on *:3000");
+    });
+  })
+  .catch((err) => {
+    console.log(err);
+  });
