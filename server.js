@@ -28,13 +28,15 @@ const rooms = {};
 var numUsersOnline = 0;
 const gameStates = {}; // An object to store the state of each game(room) as value, and can be indexed by using the roomID of the room.
 
+/**
+ * Returns all rooms in an array.
+ * room = {
+ *  roomID: String,
+ *  name: String,
+ *  players: [],
+ * }
+ */
 const listRooms = async () => {
-  // const room = {
-  //   id: socket?.id,
-  //   name: roomName,
-  //   sockets: [],
-  // };
-
   const allRooms = await Room.find();
   console.log({ listRooms: allRooms });
   io.emit("listRooms", allRooms);

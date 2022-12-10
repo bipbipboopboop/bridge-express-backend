@@ -22,4 +22,13 @@ const roomSchema = new Schema(
   { timestamps: true }
 );
 
+roomSchema.methods.addPlayer = function (playerInstance) {
+  console.log(`Adding player ${playerInstance} to room ${this}`);
+  const numPlayerInRoom = this.players.length;
+  if (numPlayerInRoom >= 4) {
+    throw `Room ${room.roomID} is full! Please try another room!`;
+  }
+  this.players.push(playerInstance);
+  this.save();
+};
 module.exports = mongoose.model("Room", roomSchema);
