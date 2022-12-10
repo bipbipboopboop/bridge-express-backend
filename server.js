@@ -87,13 +87,9 @@ const leaveRoom = (socket) => {
   }
 };
 
-const joinLobby = () => {
-  numUsersOnline++;
-  io.emit("numUsersRead", numUsersOnline);
-};
-
-const leaveLobby = (reason) => {
+const leaveLobby = (socket) => {
   numUsersOnline--;
+  console.log(`${socket.playerID} has left the lobby`);
   io.emit("numUsersRead", numUsersOnline);
 };
 
@@ -105,15 +101,13 @@ io.on("connection", (socket) => {
   /**
    * Signal that a player has entered the website(lobby) upon connection.
    */
-  console.log(`${socket?.id} has joined`);
-
   socket.on("joinLobby", (playerID) => {
     numUsersOnline++;
     io.emit("numUsersRead", numUsersOnline);
     socket.playerID = playerID;
+    console.log(`playerID : ${playerID} has joined the lobby!`);
   });
 
-  // joinLobby();
   listRooms();
 
   /**
@@ -199,10 +193,10 @@ io.on("connection", (socket) => {
     listRooms();
   });
 
-  socket.on("declareReady", () => {});
+  socket.on("declareReady", (playerID) => {});
 
   socket.on("disconnect", () => {
-    leaveLobby();
+    leaveLobby(socket);
     leaveRoom(socket);
   });
 });
