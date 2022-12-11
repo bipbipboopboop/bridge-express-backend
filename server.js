@@ -19,8 +19,9 @@ const io = new Server(server, {
 /**
  * Handler Setup
  */
-const { joinLobbyFn, createRoomFn, joinRoomFn, leaveRoomFn, listRoomsFn } =
-  require("./eventHandlers/lobbyHandler")(io);
+// const { joinLobbyFn, createRoomFn, joinRoomFn, leaveRoomFn, listRoomsFn } =
+//   require("./eventHandlers/lobbyHandler")(io);
+const registerLobbyHandlers = require("./eventHandlers/lobbyHandler");
 
 /**
  * Instance Variables
@@ -33,43 +34,12 @@ var numUsersOnline = 0;
  * server!
  */
 io.on("connection", (socket) => {
-  socket.on("joinLobby", (playerID) => {
-    numUsersOnline++;
-    io.emit("numUsersRead", numUsersOnline);
-    joinLobbyFn(playerID);
-  });
-
-  console.log({ socketInMain: socket, ioInMain: io });
-  listRoomsFn();
-
-  socket.on("createRoom", createRoomFn);
-  socket.on("joinRoom", joinRoomFn);
-
   /**
    * Lets us know that players have joined a room and are waiting in the waiting room.
    */
-  socket.on("roomReady", () => {
-    console.log(socket.id, "is ready!");
-    const room = rooms[socket.roomID];
-
-    // Toggle ready mode when room has 4 players.
-    if (room.sockets.length == 4) {
-      // tell each player to start the game.
-      for (const client of room.sockets) {
-        client.emit("initGame");
-      }
-    }
-  });
-
-  socket.on("leaveRoom", leaveRoomFn);
+  registerLobbyHandlers(io, socket);
 
   socket.on("declareReady", (playerID) => {});
-
-  socket.on("disconnect", () => {
-    numUsersOnline--;
-    io.emit("numUsersRead", numUsersOnline);
-    leaveRoomFn();
-  });
 });
 
 mongoose

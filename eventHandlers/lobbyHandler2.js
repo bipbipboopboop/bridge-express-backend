@@ -85,19 +85,6 @@ module.exports = (io, socket) => {
     io.emit("listRooms", allRooms);
   };
 
-  // socket.on("roomReady", () => {
-  //   console.log(socket.id, "is ready!");
-  //   const room = rooms[socket.roomID];
-
-  //   // Toggle ready mode when room has 4 players.
-  //   if (room.sockets.length == 4) {
-  //     // tell each player to start the game.
-  //     for (const client of room.sockets) {
-  //       client.emit("initGame");
-  //     }
-  //   }
-  // });
-
   const handleError = function (fnName, err) {
     console.log(`Error occured at ${fnName} : ${err.message}`);
     socket.emit("error", err.message);
@@ -118,4 +105,13 @@ module.exports = (io, socket) => {
     const numUsersOnline = await Player.count();
     await io.emit("numUsersRead", numUsersOnline);
   });
+
+  return {
+    joinLobbyFn,
+    createRoomFn,
+    joinRoomFn,
+    leaveRoomFn,
+
+    listRoomsFn,
+  };
 };
