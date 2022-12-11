@@ -18,21 +18,30 @@ const roomSchema = new Schema(
   { timestamps: true }
 );
 
-roomSchema.methods.addPlayer = function (playerInstance) {
-  console.log(`Adding player ${playerInstance} to room ${this}`);
+roomSchema.methods.addPlayer = async function (playerInstance) {
+  console.log(
+    `Adding player ${playerInstance.playerID} to room ${this.roomID}`
+  );
   const numPlayerInRoom = this.players.length;
-  if (numPlayerInRoom >= 4) {
+  const roomHasNoSpace = numPlayerInRoom >= 4;
+  if (roomHasNoSpace) {
     throw `Room ${room.roomID} is full! Please try another room!`;
   }
   this.players.push(playerInstance);
-  this.save();
+  await this.save();
 };
 
-roomSchema.methods.removePlayer = function (playerInstance) {
+roomSchema.methods.removePlayer = async function (playerInstance) {
   console.log(`Removing player ${playerInstance} to room ${this}`);
 
-  const newPlayers = this.players.filter((plyr) => plyr !== playerInstance);
+  const newPlayers = this.players.filter(
+    (plyr) => plyr.playerID !== this.playerID
+  );
   this.players = newPlayers;
-  this.save();
+  await this.save();
+};
+
+roomSchema.methods.isEqual = function (roomInstance) {
+  return this._id.equals(roomInstance._id);
 };
 module.exports = mongoose.model("Room", roomSchema);

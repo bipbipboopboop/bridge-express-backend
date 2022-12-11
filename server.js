@@ -7,6 +7,7 @@ const server = require("http").createServer(app);
  */
 const mongoose = require("mongoose");
 mongoose.set("strictQuery", true);
+mongoose.set("strictPopulate", false);
 dotenv.config();
 
 const { Server } = require("socket.io");

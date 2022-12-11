@@ -6,10 +6,7 @@ module.exports = (io, socket) => {
    * Signal that a player has entered the website(lobby) upon connection.
    */
   const joinLobbyFn = async function (playerID) {
-    const player = await Player.findOneOrCreate(
-      { playerID },
-      { playerID, room: null }
-    );
+    await Player.findOneOrCreate({ playerID }, { playerID, room: null });
     const numUsersOnline = await Player.count();
     await io.emit("numUsersRead", numUsersOnline);
     socket.playerID = playerID;
@@ -23,13 +20,10 @@ module.exports = (io, socket) => {
    */
   const createRoomFn = async function (roomName) {
     try {
-      const firstPlayer = await Player.findOne({
-        playerID: socket?.playerID,
-      });
       const room = await Room.create({
         roomID: socket?.id?.slice(0, 4)?.toUpperCase(),
         name: roomName,
-        players: [firstPlayer],
+        players: [],
       });
       // console.log({ "createRoomFn:room": room });
       await joinRoomFn(room.roomID);
@@ -46,12 +40,12 @@ module.exports = (io, socket) => {
    */
   const joinRoomFn = async function (roomID) {
     try {
-      const room = await Room.findOne({ roomID });
       const playerID = socket.playerID;
       const player = await Player.findOne({ playerID });
-      room.addPlayer(player);
-      player.joinRoom(room);
+      if (!player) throw `Player of ID : ${playerID} is not found!`;
+      await player.joinRoom(roomID);
       console.log(`Player ${playerID} has joined room ${roomID}`);
+      listRoomsFn();
     } catch (err) {
       handleError("joinRoomFn", err);
     }
@@ -66,14 +60,12 @@ module.exports = (io, socket) => {
     const playerID = socket.playerID;
     const player = await Player.findOne({ playerID });
 
+    console.log(`leaveRoomFn : player ${player}`);
+
     try {
       // Remove room from player instance and remove player from the `players` array of the room instance.
-      const room = await player.leaveRoom(); // First remove the room from the player instance.
-      if (room) {
-        // room will be null if the player is not in any room.
-        console.log(`playerID : ${playerID} has left the room ${room.roomID}!`);
-        await room.removePlayer(player); // Then remove the player from the room.
-      }
+      await player.leaveRoom();
+      listRoomsFn();
     } catch (err) {
       handleError("leaveRoomFn", err);
     }
@@ -98,19 +90,6 @@ module.exports = (io, socket) => {
     // console.log({ "listRooms:allRooms": allRooms });
     io.emit("listRooms", allRooms);
   };
-
-  //   socket.on("roomReady", () => {
-  //     console.log(socket.id, "is ready!");
-  //     const room = rooms[socket.roomID];
-
-  //     // Toggle ready mode when room has 4 players.
-  //     if (room.sockets.length == 4) {
-  //       // tell each player to start the game.
-  //       for (const client of room.sockets) {
-  //         client.emit("initGame");
-  //       }
-  //     }
-  //   });
 
   const handleError = function (fnName, err) {
     console.log(`Error occured at ${fnName} : ${err.message}`);
