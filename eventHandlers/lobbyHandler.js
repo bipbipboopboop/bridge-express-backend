@@ -12,6 +12,7 @@ module.exports = (io, socket) => {
     console.log({ player });
     socket.playerID = playerID;
     console.log(`playerID : ${playerID} has joined the lobby!`);
+    listRoomsFn();
   };
 
   /**
@@ -57,18 +58,30 @@ module.exports = (io, socket) => {
    * @param socket A connected socket.io socket
    */
   const leaveRoomFn = async function () {
-    console.log({ socketInLeaveRoomFn: socket });
+    // console.log({ socketInLeaveRoomFn: socket });
     const playerID = socket.playerID;
     const player = await Player.findOne({ playerID });
 
     try {
       // Remove room from player instance and remove player from the `players` array of the room instance.
       const room = await player.leaveRoom(); // First remove the room from the player instance.
-      console.log(`playerID : ${playerID} has left the room ${room.roomID}!`);
-      await room.removePlayer(player); // Then remove the player from the room.
+      if (room) {
+        // room will be null if the player is not in any room.
+        console.log(`playerID : ${playerID} has left the room ${room.roomID}!`);
+        await room.removePlayer(player); // Then remove the player from the room.
+      }
     } catch (err) {
       handleError("leaveRoomFn", err);
     }
+  };
+
+  const disconnectingFn = async function () {
+    await leaveRoomFn();
+    const playerID = socket.playerID;
+    console.log(`playerID:${playerID} has left the lobby!`);
+    await Player.findOneAndDelete({ playerID });
+    const numUsersOnline = await Player.count();
+    await io.emit("numUsersRead", numUsersOnline);
   };
 
   /**
@@ -76,7 +89,7 @@ module.exports = (io, socket) => {
    * room = {
    *  roomID: String,
    *  name: String,
-   *  players: [],
+   *  players: [{Player Instance}],
    * }
    */
   const listRoomsFn = async function () {
@@ -104,18 +117,8 @@ module.exports = (io, socket) => {
   };
 
   socket.on("joinLobby", joinLobbyFn);
-  listRoomsFn();
   socket.on("createRoom", createRoomFn);
   socket.on("joinRoom", joinRoomFn);
   socket.on("leaveRoom", leaveRoomFn);
-
-  socket.on("disconnecting", async () => {
-    leaveRoomFn();
-    Player.findOneAndDelete({ playerID: socket.playerID });
-  });
-
-  socket.on("disconnect", async () => {
-    const numUsersOnline = await Player.count();
-    await io.emit("numUsersRead", numUsersOnline);
-  });
+  socket.on("disconnecting", disconnectingFn);
 };

@@ -18,6 +18,7 @@ const roomSchema = new Schema(
       required: true,
     },
     players: [{ type: Schema.Types.ObjectId, ref: "Player" }],
+    readyPlayers: [{ type: Schema.Types.ObjectId, ref: "Player" }],
   },
   { timestamps: true }
 );

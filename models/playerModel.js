@@ -23,11 +23,16 @@ playerSchema.statics.findOneOrCreate = async function (condition) {
   }
 };
 
+/**
+ * Leave and return any room instance that the `player` instance might be in and return null if not.
+ * @param socket A connected socket.io socket
+ */
 playerSchema.methods.leaveRoom = async function () {
   // A player can only leave a room if they are already in a room.
   console.log(`${this.playerID}.leaveRoom: room = ${this.room}`);
   if (!this.room) {
-    throw `Player ${this.playerID} is not in any room!`;
+    console.log(`Player ${this.playerID} is not in any room!`);
+    return null;
   }
   // Remove room from player instance and remove player the `players` array of the room instance
   const room = this.room;

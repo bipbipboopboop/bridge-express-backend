@@ -24,21 +24,11 @@ const io = new Server(server, {
 const registerLobbyHandlers = require("./eventHandlers/lobbyHandler");
 
 /**
- * Instance Variables
- */
-const rooms = {};
-var numUsersOnline = 0;
-
-/**
  * The starting point for a user connecting to our lovely little multiplayer
  * server!
  */
 io.on("connection", (socket) => {
-  /**
-   * Lets us know that players have joined a room and are waiting in the waiting room.
-   */
   registerLobbyHandlers(io, socket);
-
   socket.on("declareReady", (playerID) => {});
 });
 
