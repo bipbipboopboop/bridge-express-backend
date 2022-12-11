@@ -31,4 +31,12 @@ roomSchema.methods.addPlayer = function (playerInstance) {
   this.players.push(playerInstance);
   this.save();
 };
+
+roomSchema.methods.removePlayer = function (playerInstance) {
+  console.log(`Removing player ${playerInstance} to room ${this}`);
+
+  const newPlayers = this.players.filter((plyr) => plyr !== playerInstance);
+  this.players = newPlayers;
+  this.save();
+};
 module.exports = mongoose.model("Room", roomSchema);

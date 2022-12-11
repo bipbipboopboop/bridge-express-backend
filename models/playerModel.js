@@ -14,9 +14,7 @@ const playerSchema = new Schema(
   { timestamps: true }
 );
 
-playerSchema.statics.findOneOrCreate = async function findOneOrCreate(
-  condition
-) {
+playerSchema.statics.findOneOrCreate = async function (condition) {
   const player = await this.findOne(condition);
   if (player) {
     return player;
@@ -25,4 +23,18 @@ playerSchema.statics.findOneOrCreate = async function findOneOrCreate(
   }
 };
 
+playerSchema.methods.leaveRoom = async function () {
+  // A player can only leave a room if they are already in a room.
+  console.log(`${this.playerID}.leaveRoom: room = ${this.room}`);
+  if (!this.room) {
+    throw `Player ${this.playerID} is not in any room!`;
+  }
+  // Remove room from player instance and remove player the `players` array of the room instance
+  const room = this.room;
+  console.log({ "player.leaveRoom:room1": { room } });
+  this.room = null;
+  console.log({ "player.leaveRoom:room2": { room } });
+  await this.save();
+  return room;
+};
 module.exports = mongoose.model("Player", playerSchema);

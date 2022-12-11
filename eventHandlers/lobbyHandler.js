@@ -1,7 +1,22 @@
-const Room = require("./models/roomModel");
-const Player = require("./models/playerModel");
+const Room = require("../models/roomModel");
+const Player = require("../models/playerModel");
 
 module.exports = (io) => {
+  /**
+   * Signal that a player has entered the website(lobby) upon connection.
+   */
+  const joinLobbyFn = async function (playerID) {
+    const socket = this;
+    const player = await Player.findOneOrCreate({ playerID, room: null });
+    console.log({ player });
+    socket.playerID = playerID;
+    console.log(`playerID : ${playerID} has joined the lobby!`);
+  };
+
+  /**
+   * Gets fired when a user wants to create a new room.
+   * @param roomName Name of the room.
+   */
   const createRoomFn = async function (roomName) {
     const socket = this;
     try {
@@ -21,16 +36,50 @@ module.exports = (io) => {
     }
   };
 
+  /**
+   * Connect a socket to a specified room
+   * @param socket A connected socket.io socket
+   * @param room An object that represents a room from the `rooms` instance variable object
+   */
   const joinRoomFn = async function (roomID, playerID) {
     try {
       const room = await Room.findOne({ roomID });
       const player = await Player.findOne({ playerID });
       room.addPlayer(player);
+      console.log(`Player ${playerID} has joined room ${roomID}`);
     } catch (err) {
       handleError("joinRoomFn", err);
     }
   };
 
+  /**
+   * Make the socket leave any room that it is a part of
+   * @param socket A connected socket.io socket
+   */
+  const leaveRoomFn = async function () {
+    const socket = this;
+    console.log({ socketInLeaveRoomFn: socket });
+    const playerID = socket.playerID;
+    const player = await Player.findOne({ playerID });
+
+    try {
+      // Remove room from player instance and remove player from the `players` array of the room instance.
+      const room = await player.leaveRoom(); // First remove the room from the player instance.
+      console.log(`playerID : ${playerID} has left the room ${room.roomID}!`);
+      await room.removePlayer(player); // Then remove the player from the room.
+    } catch (err) {
+      handleError("leaveRoomFn", err);
+    }
+  };
+
+  /**
+   * Returns all rooms in an array.
+   * room = {
+   *  roomID: String,
+   *  name: String,
+   *  players: [],
+   * }
+   */
   const listRoomsFn = async function () {
     const allRooms = await Room.find();
     console.log({ "listRooms:allRooms": allRooms });
@@ -44,8 +93,11 @@ module.exports = (io) => {
   };
 
   return {
+    joinLobbyFn,
     createRoomFn,
     joinRoomFn,
+    leaveRoomFn,
+
     listRoomsFn,
   };
 };
