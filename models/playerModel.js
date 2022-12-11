@@ -5,7 +5,7 @@ const Schema = mongoose.Schema;
 
 /**
  * Join a room instance that the `player` instance might be in.
- * @param roomID The id of a room.
+ * @param {string} roomID The id of a room.
  */
 const joinRoom = async function (roomID) {
   const roomInstance = await Room.findOne({ roomID });
@@ -59,8 +59,8 @@ const leaveRoom = async function () {
 /**
  * Returns a player instance if the player exists in the database
  * or create a new player instance if it doesn't exists.
- * @param condition A condition object.
- * @param defaultValue The attributes for creating a player instance if this player isn't in database yet.
+ * @param {object} condition A condition object.
+ * @param {object} defaultValue The attributes for creating a player instance if this player isn't in database yet.
  */
 const findOneOrCreate = async function (condition, defaultValue) {
   const player = await this.findOne(condition);
@@ -71,6 +71,15 @@ const findOneOrCreate = async function (condition, defaultValue) {
   }
 };
 
+const toggleReady = async function () {};
+
+/**
+ * Make the player deal a card if it's their turn. Throw an error if it's not their turn.
+ * @param {string} suit Suit of the card, i.e `C`,`D`,`H`,`S`,`NT` for `Clubs`, `Diamonds`, `Hearts`, `Spades`, and `No Trump` respectively
+ * @param {number} cardValue The value of the card. `A` is worth 14 points, `K` 13 points, `2` 2 points
+ */
+const playCard = async function (suit, cardValue) {};
+
 const playerSchema = new Schema(
   {
     playerID: {
@@ -78,9 +87,12 @@ const playerSchema = new Schema(
       required: true,
       unique: true,
     },
+    name: String,
     room: { type: Schema.Types.ObjectId, ref: "Room" },
+    positionToPlay: Number,
+    cardsInHand: [{ String, Number }],
   },
-  { methods: { joinRoom, leaveRoom }, statics: { findOneOrCreate } }
+  { methods: { joinRoom, leaveRoom, playCard }, statics: { findOneOrCreate } }
 );
 
 module.exports = mongoose.model("Player", playerSchema);

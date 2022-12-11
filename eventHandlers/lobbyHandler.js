@@ -16,7 +16,7 @@ module.exports = (io, socket) => {
 
   /**
    * Gets fired when a user wants to create a new room.
-   * @param roomName Name of the room.
+   * @param {string} roomName Name of the room.
    */
   const createRoomFn = async function (roomName) {
     try {
@@ -35,8 +35,7 @@ module.exports = (io, socket) => {
 
   /**
    * Connect a socket to a specified room
-   * @param socket A connected socket.io socket
-   * @param room An object that represents a room from the `rooms` instance variable object
+   * @param {string} roomID An object that represents a room from the `rooms` instance variable object
    */
   const joinRoomFn = async function (roomID) {
     try {
@@ -53,7 +52,6 @@ module.exports = (io, socket) => {
 
   /**
    * Make the socket leave any room that it is a part of
-   * @param socket A connected socket.io socket
    */
   const leaveRoomFn = async function () {
     // console.log({ socketInLeaveRoomFn: socket });
