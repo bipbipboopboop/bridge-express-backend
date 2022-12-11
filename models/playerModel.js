@@ -14,13 +14,34 @@ const playerSchema = new Schema(
   { timestamps: true }
 );
 
-playerSchema.statics.findOneOrCreate = async function (condition) {
+playerSchema.statics.findOneOrCreate = async function (
+  condition,
+  defaultValue
+) {
   const player = await this.findOne(condition);
   if (player) {
     return player;
   } else {
-    return this.create(condition);
+    return this.create(defaultValue);
   }
+};
+
+/**
+ * Join a room instance that the `player` instance might be in.
+ * @param socket A connected socket.io socket
+ */
+playerSchema.methods.joinRoom = async function (roomInstance) {
+  console.log(`(${this.playerID})player.joinRoom: room = ${this.room}`);
+  // A player can only join a room if they are not already in a room.
+  if (this.room) {
+    console.log(`Player ${this.playerID} is not in any room!`);
+    return null;
+  }
+
+  // Add room to player instance.
+  this.room = roomInstance;
+  await this.save();
+  return this;
 };
 
 /**
@@ -29,12 +50,12 @@ playerSchema.statics.findOneOrCreate = async function (condition) {
  */
 playerSchema.methods.leaveRoom = async function () {
   // A player can only leave a room if they are already in a room.
-  console.log(`${this.playerID}.leaveRoom: room = ${this.room}`);
+  console.log(`(${this.playerID})player.leaveRoom: room = ${this.room}`);
   if (!this.room) {
     console.log(`Player ${this.playerID} is not in any room!`);
     return null;
   }
-  // Remove room from player instance and remove player the `players` array of the room instance
+  // Remove room from player instance.
   const room = this.room;
   console.log({ "player.leaveRoom:room1": { room } });
   this.room = null;

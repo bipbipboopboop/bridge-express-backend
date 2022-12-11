@@ -24,12 +24,10 @@ const io = new Server(server, {
 const registerLobbyHandlers = require("./eventHandlers/lobbyHandler");
 
 /**
- * The starting point for a user connecting to our lovely little multiplayer
- * server!
+ * The starting point for a user connecting to the server!
  */
 io.on("connection", (socket) => {
   registerLobbyHandlers(io, socket);
-  socket.on("declareReady", (playerID) => {});
 });
 
 mongoose

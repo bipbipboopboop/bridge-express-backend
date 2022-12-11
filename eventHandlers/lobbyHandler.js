@@ -6,10 +6,12 @@ module.exports = (io, socket) => {
    * Signal that a player has entered the website(lobby) upon connection.
    */
   const joinLobbyFn = async function (playerID) {
-    const player = await Player.findOneOrCreate({ playerID, room: null });
+    const player = await Player.findOneOrCreate(
+      { playerID },
+      { playerID, room: null }
+    );
     const numUsersOnline = await Player.count();
     await io.emit("numUsersRead", numUsersOnline);
-    console.log({ player });
     socket.playerID = playerID;
     console.log(`playerID : ${playerID} has joined the lobby!`);
     listRoomsFn();
@@ -29,7 +31,7 @@ module.exports = (io, socket) => {
         name: roomName,
         players: [firstPlayer],
       });
-      console.log({ "createRoomFn:room": room });
+      // console.log({ "createRoomFn:room": room });
       await joinRoomFn(room.roomID);
       listRoomsFn();
     } catch (err) {
@@ -42,11 +44,13 @@ module.exports = (io, socket) => {
    * @param socket A connected socket.io socket
    * @param room An object that represents a room from the `rooms` instance variable object
    */
-  const joinRoomFn = async function (roomID, playerID) {
+  const joinRoomFn = async function (roomID) {
     try {
       const room = await Room.findOne({ roomID });
+      const playerID = socket.playerID;
       const player = await Player.findOne({ playerID });
       room.addPlayer(player);
+      player.joinRoom(room);
       console.log(`Player ${playerID} has joined room ${roomID}`);
     } catch (err) {
       handleError("joinRoomFn", err);
@@ -84,32 +88,29 @@ module.exports = (io, socket) => {
     await io.emit("numUsersRead", numUsersOnline);
   };
 
+  const declareReadyFn = (playerID) => {};
+
   /**
    * Returns all rooms in an array.
-   * room = {
-   *  roomID: String,
-   *  name: String,
-   *  players: [{Player Instance}],
-   * }
    */
   const listRoomsFn = async function () {
     const allRooms = await Room.find();
-    console.log({ "listRooms:allRooms": allRooms });
+    // console.log({ "listRooms:allRooms": allRooms });
     io.emit("listRooms", allRooms);
   };
 
-  // socket.on("roomReady", () => {
-  //   console.log(socket.id, "is ready!");
-  //   const room = rooms[socket.roomID];
+  //   socket.on("roomReady", () => {
+  //     console.log(socket.id, "is ready!");
+  //     const room = rooms[socket.roomID];
 
-  //   // Toggle ready mode when room has 4 players.
-  //   if (room.sockets.length == 4) {
-  //     // tell each player to start the game.
-  //     for (const client of room.sockets) {
-  //       client.emit("initGame");
+  //     // Toggle ready mode when room has 4 players.
+  //     if (room.sockets.length == 4) {
+  //       // tell each player to start the game.
+  //       for (const client of room.sockets) {
+  //         client.emit("initGame");
+  //       }
   //     }
-  //   }
-  // });
+  //   });
 
   const handleError = function (fnName, err) {
     console.log(`Error occured at ${fnName} : ${err.message}`);
@@ -120,5 +121,8 @@ module.exports = (io, socket) => {
   socket.on("createRoom", createRoomFn);
   socket.on("joinRoom", joinRoomFn);
   socket.on("leaveRoom", leaveRoomFn);
+
+  socket.on("declareReady", declareReadyFn);
+
   socket.on("disconnecting", disconnectingFn);
 };
