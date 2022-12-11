@@ -80,7 +80,7 @@ module.exports = (io, socket) => {
     await io.emit("numUsersRead", numUsersOnline);
   };
 
-  const declareReadyFn = (playerID) => {};
+  const declareReadyFn = () => {};
 
   /**
    * Returns all rooms in an array.

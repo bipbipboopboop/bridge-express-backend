@@ -32,10 +32,10 @@ roomSchema.methods.addPlayer = async function (playerInstance) {
 };
 
 roomSchema.methods.removePlayer = async function (playerInstance) {
-  console.log(`Removing player ${playerInstance} to room ${this}`);
-
+  console.log(`Removing player ${playerInstance} from room ${this}`);
+  this.populate("players");
   const newPlayers = this.players.filter(
-    (plyr) => plyr.playerID !== this.playerID
+    (plyr) => plyr.playerID !== playerInstance.playerID
   );
   this.players = newPlayers;
   await this.save();
