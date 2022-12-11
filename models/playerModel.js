@@ -10,13 +10,18 @@ const Schema = mongoose.Schema;
 const joinRoom = async function (roomID) {
   const roomInstance = await Room.findOne({ roomID });
   if (!roomInstance) {
-    throw `Room ${roomID} is not found! Please try another room!`;
+    throw new Error(`Room ${roomID} is not found! Please try another room!`);
   }
 
   // A player can only join the room if the room has space left. Check this case first.
   const newRoomHasSpace = roomInstance.players.length < 4;
+  console.log(
+    `newRoomHasSpace : ${newRoomHasSpace} ? players : ${roomInstance.players}`
+  );
   if (!newRoomHasSpace) {
-    throw `Room ${roomInstance.roomID} is full! Please try another room!`;
+    throw new Error(
+      `Room ${roomInstance.roomID} is full! Please try another room!`
+    );
   }
 
   await this.leaveRoom();

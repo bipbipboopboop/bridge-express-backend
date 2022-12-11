@@ -42,7 +42,7 @@ module.exports = (io, socket) => {
     try {
       const playerID = socket.playerID;
       const player = await Player.findOne({ playerID });
-      if (!player) throw `Player of ID : ${playerID} is not found!`;
+      if (!player) throw new Error(`Player of ID : ${playerID} is not found!`);
       await player.joinRoom(roomID);
       console.log(`Player ${playerID} has joined room ${roomID}`);
       listRoomsFn();

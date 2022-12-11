@@ -13,7 +13,7 @@ const addPlayer = async function (playerInstance) {
   const numPlayerInRoom = this.players.length;
   const roomHasNoSpace = numPlayerInRoom >= 4;
   if (roomHasNoSpace) {
-    throw `Room ${room.roomID} is full! Please try another room!`;
+    throw new Error(`Room ${room.roomID} is full! Please try another room!`);
   }
   this.players.push(playerInstance);
   await this.save();
